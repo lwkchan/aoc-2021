@@ -1,11 +1,11 @@
 use std::fs;
 
-// How many measurements are larger than the previous measurement?
 fn main() {
-    // solve_1()
-    solve_2()
+    solve_1();
+    solve_2();
 }
 
+// How many measurements are larger than the previous measurement?
 fn solve_1() {
     let file_name = "src/input.txt";
     let file_data = fs::read_to_string(file_name).unwrap();
@@ -60,5 +60,5 @@ fn solve_2() {
         last_total = current_total;
     }
 
-    println!("{}", number_of_increases) // 1789
+    println!("{}", number_of_increases)
 }
