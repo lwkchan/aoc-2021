@@ -34,43 +34,16 @@ impl VentLine {
 }
 
 fn main() {
+    solve_1();
+    solve_2();
+}
+
+fn solve_1() {
     let file_name = "src/input.txt";
     let file_data = fs::read_to_string(file_name).unwrap();
     let lines = file_data.lines().collect::<Vec<&str>>();
-
-    let mut vent_lines: Vec<VentLine> = Vec::new();
-    let mut largest_x: u32 = 0;
-    let mut largest_y: u32 = 0;
-
-    for line in lines {
-        let vent_line = VentLine::new(line);
-
-        let (x1, x2) = vent_line.x;
-        let (y1, y2) = vent_line.y;
-
-        // For now, only consider horizontal and vertical lines: lines where either x1 = x2 or y1 = y2.
-        if x1 == x2 || y1 == y2 {
-            // get largest x2 and largest y2 to lay out the grid for later
-            vent_lines.push(vent_line);
-            if x1 > largest_x {
-                largest_x = x1;
-            }
-            if x2 > largest_x {
-                largest_x = x2;
-            }
-            if y1 > largest_y {
-                largest_y = y1;
-            }
-            if y2 > largest_y {
-                largest_y = y2;
-            }
-        }
-    }
-
-    // make a largest poss grid grid;
-    let grid: Vec<Vec<u32>> = vec![vec![0; (largest_x + 1) as usize]; (largest_y + 1) as usize];
-    // println!("{:?}", grid);
-    // process lines
+    let vent_lines = generate_vent_lines(lines, Some(is_equal_x_or_y));
+    let grid = generate_grid(&vent_lines);
     let mut processed_grid = grid.clone();
     for v in vent_lines {
         let (x1, x2) = v.x; // col
@@ -80,7 +53,7 @@ fn main() {
             if !(row_index >= y1 as usize && row_index <= y2 as usize) {
                 continue;
             }
-            for (col_index, cell) in row.iter().enumerate() {
+            for (col_index, _cell) in row.iter().enumerate() {
                 // if numbers are between, then += 1;
                 if col_index >= x1 as usize && col_index <= x2 as usize {
                     processed_grid[row_index][col_index] += 1;
@@ -89,15 +62,100 @@ fn main() {
         }
     }
 
+    println!("{:?}", count_at_least_two(&processed_grid))
+}
+
+fn solve_2() {
+    let file_name = "src/input.txt";
+    let file_data = fs::read_to_string(file_name).unwrap();
+    let lines = file_data.lines().collect::<Vec<&str>>();
+    let vent_lines = generate_vent_lines(lines, None);
+    let grid = generate_grid(&vent_lines);
+    let mut processed_grid = grid.clone();
+
+    for v in vent_lines {
+        let (x1, x2) = v.x; // col
+        let (y1, y2) = v.y; // row
+
+        for (row_index, row) in grid.iter().enumerate() {
+            if !(row_index >= y1 as usize && row_index <= y2 as usize) {
+                continue;
+            }
+            for (col_index, _cell) in row.iter().enumerate() {
+                // if numbers are between, then += 1;
+                if col_index >= x1 as usize && col_index <= x2 as usize {
+                    processed_grid[row_index][col_index] += 1;
+                }
+            }
+        }
+    }
+}
+
+fn is_equal_x_or_y(vent_line: &VentLine) -> bool {
+    let (x1, x2) = vent_line.x;
+    let (y1, y2) = vent_line.y;
+
+    x1 == x2 || y1 == y2
+}
+
+fn generate_vent_lines(
+    lines: Vec<&str>,
+    filter: Option<fn(vent_line: &VentLine) -> bool>,
+) -> Vec<VentLine> {
+    let mut vent_lines: Vec<VentLine> = Vec::new();
+    for line in lines {
+        let vent_line = VentLine::new(line);
+        match filter {
+            Some(f) => {
+                if f(&vent_line) {
+                    vent_lines.push(vent_line);
+                }
+            }
+
+            None => {
+                vent_lines.push(vent_line);
+            }
+        }
+    }
+
+    vent_lines
+}
+
+fn generate_grid(vent_lines: &Vec<VentLine>) -> Vec<Vec<u32>> {
+    let mut largest_x: u32 = 0;
+    let mut largest_y: u32 = 0;
+
+    for line in vent_lines {
+        let (x1, x2) = line.x;
+        let (y1, y2) = line.y;
+
+        if x1 > largest_x {
+            largest_x = x1;
+        }
+        if x2 > largest_x {
+            largest_x = x2;
+        }
+        if y1 > largest_y {
+            largest_y = y1;
+        }
+        if y2 > largest_y {
+            largest_y = y2;
+        }
+    }
+
+    vec![vec![0; (largest_x + 1) as usize]; (largest_y + 1) as usize]
+}
+
+fn count_at_least_two(grid: &Vec<Vec<u32>>) -> u32 {
     let mut count_at_least_two = 0;
 
-    for row in processed_grid {
+    for row in grid {
         for square in row {
-            if square >= 2 {
+            if square >= &2 {
                 count_at_least_two += 1;
             }
         }
     }
 
-    println!("{:?}", count_at_least_two)
+    count_at_least_two
 }
